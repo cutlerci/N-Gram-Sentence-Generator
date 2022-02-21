@@ -57,8 +57,9 @@ In the following sample run I used the following novels to train the model with 
    - Leviathan, Thomas Hobbes - 216349 words
    - Collection Of Dr. Seuss, Theodore Geisal, 10,000 words
 
-<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
- >>> ngram.py 3 20 [For clarity, I will refrain from listing the above texts a second time.]
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+\>\>\> ngram.py 3 20 (For clarity, I will refrain from listing the above texts a second time.)
  Holmes shook his head because he couldn't count the pesetas and the choice, if it must be the remains of the union jack, his eyelashes are moistened with emotion.
 
  For my youth, but had so wished to do in moscow, concealing his name as the sudden change, but it’s only to give my hand and went for myself I know that, to express them— be not true, because up to the grandeur and gives me life.
@@ -97,7 +98,8 @@ In the following sample run I used the following novels to train the model with 
  This said, pisander, from the firm athenian phalanx stands, and gasps at him.
 
  Pierre said was true, he shouted again, receiving no orders, but only spoke but thought, and as she walked up to your commands.
-<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 
 The program works by first parsing in the command line arguments. After which the text file is read in and stored as a single string variable. This string variable, containing the entire file is preprocessed resulting in the following modifications:
  - The entire string is made entirely lower case.
