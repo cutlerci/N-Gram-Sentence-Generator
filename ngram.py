@@ -157,6 +157,23 @@ import re
 import random
 from collections import defaultdict
 
+
+# The following function is used to print the output sentences in a more human-readable format.
+# The sentences are stripped of the start and end tags as well as the trailing extra space.
+# Then the sentence is capitalized and any "i" characters in the sentence are made uppercase.
+# Then the sentence is printed to the screen.
+
+
+def print_sentence(param):
+    param = re.sub(r"<start>", "", param)
+    param = re.sub(r"\s<end>", ".", param)
+    param = param.lstrip()
+    param = param.capitalize()
+    param = re.sub(r"\si\s", " I ", param)
+    print(param)
+    print()
+
+
 ngramNumber = int(argv[1])
 sentencesNeededNumber = int(argv[2])
 fileNames = argv[3:]
@@ -165,10 +182,18 @@ nGramDict = defaultdict(dict)
 history = ""
 totalWordsInAllBooks = 0
 
+print("This program generates random sentences based on an N-Gram model.")
+print("Command line settings : ngram.py " + str(ngramNumber) + " " + str(sentencesNeededNumber))
+print("Author: Charles Cutler")
+
 # Make the start variable
 startVariable = ""
-for _ in range(ngramNumber-1):
-    startVariable += "<start> "
+if ngramNumber == 1:
+    startVariable = "<start> "
+else:
+    for _ in range(ngramNumber-1):
+        startVariable += "<start> "
+
 
 # Get an entire book, or corpus, as a string
 for textFile in fileNames:
@@ -191,44 +216,34 @@ for textFile in fileNames:
     wordArray = corpusString.split()
     totalWordsInAllBooks += len(wordArray)
 
-    for word in wordArray:
-        nGramList.append(word)  # Add word to sliding window of length n (the N-Gram)
-        if len(nGramList) == ngramNumber:  # If the sliding window is full, that is we have the full N-Gram
-            keyWord = nGramList.pop(-1)  # Pop off the last word in the window
-            for x in nGramList:  # concatenate all the remaining (n-1) words in the window as the "history"
-                history += (x + " ")
-            history = history.rstrip(" ")  # remove the trailing space on the history
-            historyDict[history] += 1  # This updates the Frequency we have seen the history phrase
+    # If we want to use Uni-grams, just count the frequency of each word individually.
+    if ngramNumber == 1:
+        for word in wordArray:
+            historyDict[word] += 1
+    else:
+        for word in wordArray:
+            nGramList.append(word)  # Add word to sliding window of length n (the N-Gram)
+            if len(nGramList) == ngramNumber:  # If the sliding window is full, that is we have the full N-Gram
+                keyWord = nGramList.pop(-1)  # Pop off the last word in the window
+                for x in nGramList:  # concatenate all the remaining (n-1) words in the window as the "history"
+                    history += (x + " ")
+                history = history.rstrip(" ")  # remove the trailing space on the history
+                historyDict[history] += 1  # This updates the Frequency we have seen the history phrase
 
-            # This updates the frequency we have seen the history phrase followed by the specific keyWord
-            nGramDict[history][keyWord] = (nGramDict.setdefault(history, {})).setdefault(keyWord, 0) + 1
+                # This updates the frequency we have seen the history phrase followed by the specific keyWord
+                nGramDict[history][keyWord] = (nGramDict.setdefault(history, {})).setdefault(keyWord, 0) + 1
 
-            nGramList.append(keyWord)  # This reinstates the N-Gram window.
-            nGramList.pop(0)  # This "slides" the window one to the right.
-            history = ""  # This resets the history phrase for the next iteration.
+                nGramList.append(keyWord)  # This reinstates the N-Gram window.
+                nGramList.pop(0)  # This "slides" the window one to the right.
+                history = ""  # This resets the history phrase for the next iteration.
 
 print("Total words read: " + str(totalWordsInAllBooks) + "\n")
 
-# Print Sentences well formatted
+
 randomNum = random.random()
 probSum = 0
 update = []
 currentHistoryDict = {}
-
-# The following function is used to print the output sentences in a more human-readable format.
-# The sentences are stripped of the start and end tags as well as the trailing extra space.
-# Then the sentence is capitalized and any "i" characters in the sentence are made uppercase.
-# Then the sentence is printed to the screen.
-
-
-def print_sentence(param):
-    param = re.sub(r"<start>", "", param)
-    param = re.sub(r"\s<end>", ".", param)
-    param = param.lstrip()
-    param = param.capitalize()
-    param = re.sub(r"\si\s", " I ", param)
-    print(param)
-
 
 # Build the N-Gram tables (uni gram, and history dict)
 for x in range(sentencesNeededNumber, 0, -1):
@@ -239,32 +254,50 @@ for x in range(sentencesNeededNumber, 0, -1):
     while currentWord != "<end>":  # Make a sentence while the program has not selected
         # the end tag which denotes that the sentence is complete
 
-        # The below line retrieves the nested dictionary for that specific history value.
-        # This is used to travers all the possible options for the next word in the sentence.
-        currentHistoryDict = nGramDict[history]
+        # if wwe want to generate sentences from a unigram the program enters the following if
+        if ngramNumber == 1:
+            currentHistoryDict = historyDict  # in the case this line is reached, the history dict is an unigram table
+            # For all the word in the corpus, consider one at a time if a given word will be the randomly selected word
+            # to be put in the sentence.
+            # Then this process is repeated until the end tag is picked
+            for key, values in currentHistoryDict.items():
+                probSum += (historyDict[history])/totalWordsInAllBooks
+                if randomNum < probSum:
+                    currentWord = key
+                    sentence += (" " + currentWord)
+                    break
+            # This line here "slides" the history one word further along the sentence.
+            history = currentWord
+            # This resets the numerical values for the next word.
+            probSum = 0
+            randomNum = random.random()
+        else:
+            # The below line retrieves the nested dictionary for that specific history value.
+            # This is used to travers all the possible options for the next word in the sentence.
+            currentHistoryDict = nGramDict[history]
 
-        # The following for loop checks to see if the random number value has been reaching
-        # while "traversing the number line" as described in the opening comments.
-        # When the sum of the probabilities so far has been reached then a word has been
-        # selected and added to the sentence.
-        for key, values in currentHistoryDict.items():
-            probSum += (nGramDict[history][key])/(historyDict[history])
-            if randomNum < probSum:
-                currentWord = key
-                sentence += (" " + currentWord)
-                break
-        # This Section here "slides" the history one word further along the sentence
-        # after the next word has been selected.
-        update = history.split()
-        history = ""
-        update.pop(0)
-        update.append(currentWord)
-        for word in update:
-            history += word + " "
-        history = history.rstrip()
+            # The following for loop checks to see if the random number value has been reaching
+            # while "traversing the number line" as described in the opening comments.
+            # When the sum of the probabilities so far has been reached then a word has been
+            # selected and added to the sentence.
+            for key, values in currentHistoryDict.items():
+                probSum += (nGramDict[history][key])/(historyDict[history])
+                if randomNum < probSum:
+                    currentWord = key
+                    sentence += (" " + currentWord)
+                    break
+            # This Section here "slides" the history one word further along the sentence
+            # after the next word has been selected.
+            update = history.split()
+            history = ""
+            update.pop(0)
+            update.append(currentWord)
+            for word in update:
+                history += word + " "
+            history = history.rstrip()
 
-        # This resets the numerical values for the next word.
-        probSum = 0
-        randomNum = random.random()
+            # This resets the numerical values for the next word.
+            probSum = 0
+            randomNum = random.random()
     # This is a special function I built to print the sentences in a cleaner, more "correct" format for reading.
     print_sentence(sentence)
